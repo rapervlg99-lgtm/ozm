@@ -49,7 +49,7 @@
               v-model="win.group.fireLimit"
               class="prt__group-input prt__group-select"
               aria-label="Предел ОС группы"
-              @change="applyGroupAttrs(win.group.id)"
+              @change="onGroupFireLimit(win.group.id)"
             >
               <option value="">R…</option>
               <option
@@ -58,6 +58,21 @@
                 :value="r"
               >
                 {{ r }}
+              </option>
+            </select>
+            <select
+              v-model="win.group.coatingType"
+              class="prt__group-input prt__group-select prt__coating-select"
+              aria-label="Тип покрытия группы"
+              @change="applyGroupAttrs(win.group.id)"
+            >
+              <option value="">Покрытие…</option>
+              <option
+                v-for="c in coatingChoices(win.group.fireLimit)"
+                :key="c"
+                :value="c"
+              >
+                {{ c }}
               </option>
             </select>
             <select
@@ -223,8 +238,10 @@ import { computed, reactive, ref, watch } from "vue";
 import ProfileDataRow from "./ProfileDataRow.vue";
 import { bearingTypeChoices } from "@/utils/bearingTypes";
 import {
+  availableCoatingTypes,
   isCoatingAvailableForFireLimit
 } from "@/utils/coatingTypes";
+import { groupRowPatch } from "@/utils/groupAttrs";
 import { fireLimitChoices } from "@/utils/fireLimits";
 import { autoGroupByConstruction, hasConstructions } from "@/utils/autoGroup";
 import type { OgzRow, OgzRowPatch, ProfileCandidate } from "@/types/ogz";
@@ -237,6 +254,8 @@ export interface ElementGroup {
   name: string;
   fireLimit: string;
   bearingType: string;
+  /** тип защитного покрытия группы; '' — как у позиций */
+  coatingType: string;
   rowIds: number[];
 }
 
@@ -339,6 +358,7 @@ function addGroup(): void {
     name: `Группа ${groups.value.length + 1}`,
     fireLimit: "",
     bearingType: "",
+    coatingType: "",
     rowIds: []
   });
 }
@@ -360,6 +380,7 @@ function autoGroup(): void {
     name,
     fireLimit: "",
     bearingType: "",
+    coatingType: "",
     rowIds: []
   }));
   groups.value = res.groups;
@@ -372,6 +393,15 @@ function autoGroup(): void {
   if (res.created) parts.push(`новых групп: ${res.created}`);
   if (res.skipped) parts.push(`без элемента конструкции: ${res.skipped} — оставлены как есть`);
   autoNote.value = parts.join("; ") + ".";
+}
+
+/** Смена предела ОС группы: покрытие, недоступное при новом R, снимается. */
+function onGroupFireLimit(groupId: string): void {
+  const g = groups.value.find((x) => x.id === groupId);
+  if (g && g.coatingType && !isCoatingAvailableForFireLimit(g.coatingType, g.fireLimit)) {
+    g.coatingType = "";
+  }
+  applyGroupAttrs(groupId);
 }
 
 function plural(n: number, one: string, few: string, many: string): string {
@@ -438,26 +468,20 @@ function assignRowsToGroup(groupId: string, rowIds: number[]): void {
   applyGroupAttrs(groupId);
 }
 
+/** Варианты покрытия для группы: только доступные при её пределе ОС. */
+function coatingChoices(fireLimit: string): string[] {
+  return [...availableCoatingTypes(fireLimit)];
+}
+
 function applyGroupAttrs(groupId: string): void {
   const g = groups.value.find((x) => x.id === groupId);
   if (!g || g.rowIds.length === 0) return;
-  const fireLimit = g.fireLimit.trim();
-  const bearingType = g.bearingType.trim();
-  if (!fireLimit && !bearingType) return;
+  if (!g.fireLimit.trim() && !g.bearingType.trim() && !g.coatingType.trim()) return;
 
   const rowsById = new Map(props.rows.map((r) => [r.id, r]));
   const patches = g.rowIds.map((id) => {
     const row = rowsById.get(id);
-    const patch: OgzRowPatch = {};
-    if (fireLimit) patch.fireLimit = fireLimit;
-    if (bearingType) patch.bearingType = bearingType;
-    if (
-      fireLimit &&
-      row?.coatingType &&
-      !isCoatingAvailableForFireLimit(row.coatingType, fireLimit)
-    ) {
-      patch.coatingType = "";
-    }
+    const patch = groupRowPatch(g, row ?? {}) as OgzRowPatch;
     return { id, patch };
   });
 
@@ -697,6 +721,11 @@ defineExpose({ getGroupsForPrefill });
 
 .prt__bearing-select {
   width: 140px;
+}
+
+/* покрытие группы: подписи длинные (TAIKOR FP Extra + …), поле шире */
+.prt__coating-select {
+  width: 210px;
 }
 
 .prt__group-count {
