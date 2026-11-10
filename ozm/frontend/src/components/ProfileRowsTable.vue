@@ -800,15 +800,17 @@ defineExpose({ getGroupsForPrefill });
   white-space: normal;
 }
 
+/* Предупреждение о покрытии — одной строкой с многоточием: полный текст в
+   подсказке при наведении (title), чтобы строка таблицы не раздувалась. */
 .prt__table :deep(.pdr__coating-hint) {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 4px;
   margin-top: 4px;
   max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: help;
   font-size: var(--font-size-body-small);
   line-height: var(--font-lineHeight-body-small);
   color: var(--content-system-warning);
@@ -821,7 +823,9 @@ defineExpose({ getGroupsForPrefill });
 .prt__table :deep(.pdr__coating-hint > span) {
   flex: 1 1 auto;
   min-width: 0;
-  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* подписи шапки переносятся на две строки — иначе «Наименование профиля, ГОСТ»

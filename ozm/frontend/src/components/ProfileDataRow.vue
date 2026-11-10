@@ -146,7 +146,7 @@
       </select>
       <!-- Подсказка появляется, как только покрытие и предел ОС несовместимы:
            «TAIKOR FP Graphite не подходит для R180 — бывает при R15…R120». -->
-      <div v-if="coatingHint" class="pdr__coating-hint" role="status">
+      <div v-if="coatingHint" class="pdr__coating-hint" role="status" :title="coatingHint">
         <TnIcon name="info" :size="16" />
         <span>{{ coatingHint }}</span>
       </div>
@@ -236,12 +236,14 @@ const constructionLabel = computed(() => formatConstruction(props.row.constructi
  * конструкции — те же правила, что в калькуляторе), затем быстрая проверка
  * диапазона R: она срабатывает сразу, пока движок ещё считает.
  */
-const coatingHint = computed(() => {
-  const issue = (props.issue || "").trim();
-  // в строке — короткая формулировка: совет «что делать» остаётся в баннере
-  const short = issue.replace(/\s*—\s*выберите другое покрытие или предел ОС\.?\s*$/i, "");
-  return short || coatingFitHint(props.row.coatingType, props.row.fireLimit);
-});
+/**
+ * Полный текст предупреждения. В таблице он показывается одной строкой с
+ * многоточием (место ограничено шириной колонки), а целиком виден в подсказке
+ * при наведении — и на самой строке, и на селекторе покрытия.
+ */
+const coatingHint = computed(
+  () => (props.issue || "").trim() || coatingFitHint(props.row.coatingType, props.row.fireLimit)
+);
 
 const needsAttention = computed(
   () =>
