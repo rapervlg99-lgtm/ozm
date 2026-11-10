@@ -791,6 +791,39 @@ defineExpose({ getGroupsForPrefill });
   border-bottom: 1px solid var(--border-secondary-enabled);
 }
 
+/* Колонка покрытия: фиксированная ширина, а предупреждение о непригодности
+   покрытия переносится по словам и не выходит за границу последнего столбца
+   (у td таблицы white-space: nowrap — перебиваем его только для этой ячейки). */
+.prt__table :deep(td.pdr__coating-cell) {
+  width: 208px;
+  max-width: 208px;
+  white-space: normal;
+}
+
+.prt__table :deep(.pdr__coating-hint) {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: var(--font-size-body-small);
+  line-height: var(--font-lineHeight-body-small);
+  color: var(--content-system-warning);
+}
+
+.prt__table :deep(.pdr__coating-hint > svg) {
+  flex: 0 0 16px;
+}
+
+.prt__table :deep(.pdr__coating-hint > span) {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+}
+
 /* подписи шапки переносятся на две строки — иначе «Наименование профиля, ГОСТ»
    и «Элемент конструкции» одни раздвигают таблицу за 1440 px */
 .prt__table :deep(th) {

@@ -236,9 +236,12 @@ const constructionLabel = computed(() => formatConstruction(props.row.constructi
  * конструкции — те же правила, что в калькуляторе), затем быстрая проверка
  * диапазона R: она срабатывает сразу, пока движок ещё считает.
  */
-const coatingHint = computed(
-  () => (props.issue || "").trim() || coatingFitHint(props.row.coatingType, props.row.fireLimit)
-);
+const coatingHint = computed(() => {
+  const issue = (props.issue || "").trim();
+  // в строке — короткая формулировка: совет «что делать» остаётся в баннере
+  const short = issue.replace(/\s*—\s*выберите другое покрытие или предел ОС\.?\s*$/i, "");
+  return short || coatingFitHint(props.row.coatingType, props.row.fireLimit);
+});
 
 const needsAttention = computed(
   () =>
