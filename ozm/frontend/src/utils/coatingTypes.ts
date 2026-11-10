@@ -74,3 +74,42 @@ export function coatingTypeChoices(
   }
   return [...available];
 }
+
+/**
+ * Пределы огнестойкости, при которых тип покрытия применим, — подсказкой
+ * «R15…R120», «R90…R120» или пустой строкой (без ограничений по R).
+ */
+export function coatingFireLimitRange(coating: string): string {
+  const c = (coating || "").trim();
+  if (!(COATING_TYPES as readonly string[]).includes(c)) return "";
+  switch (c as CoatingType) {
+    case "TAIKOR FP Epoxy":
+    case "TAIKOR FP Graphite":
+      return "R15…R120";
+    case "TAIKOR FP Extra + TAIKOR FP Graphite":
+      return "R90…R120";
+    default:
+      return "";
+  }
+}
+
+/**
+ * Подсказка, если покрытие не подходит к пределу огнестойкости: пустая строка —
+ * всё в порядке. Пример: «TAIKOR FP Graphite не подходит для R180 — это покрытие
+ * бывает при R15…R120».
+ */
+export function coatingFitHint(coating: string, fireLimit?: string): string {
+  const c = (coating || "").trim();
+  if (!c) return "";
+  if (isCoatingAvailableForFireLimit(c, fireLimit)) return "";
+  const range = coatingFireLimitRange(c);
+  const r = (fireLimit || "").trim() || "не задан";
+  return range
+    ? `${c} не подходит для ${r} — это покрытие бывает при ${range}`
+    : `${c} не подходит для ${r}`;
+}
+
+/** Подходит ли покрытие строки к её пределу ОС (для фильтров и счётчиков). */
+export function coatingFitsRow(row: { coatingType?: string; fireLimit?: string }): boolean {
+  return !coatingFitHint(row.coatingType || "", row.fireLimit);
+}

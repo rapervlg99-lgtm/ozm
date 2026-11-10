@@ -96,6 +96,7 @@ func (s *Server) Router() http.Handler {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/dicts", s.handleDicts)
 		r.Post("/calc", s.handleCalc)
+		r.Post("/calc/check", s.handleCalcCheck)
 		r.Get("/calc/{id}", s.handleGetCalc)
 		r.Post("/share", s.handleCreateShare)
 		r.Get("/share/{token}", s.handleGetShare)

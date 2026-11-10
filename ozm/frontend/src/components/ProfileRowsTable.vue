@@ -129,6 +129,7 @@
                   @length-input="onLengthInput"
                   @length-commit="commitLength"
                   @heating="onHeatingChange"
+                  :issue="issues?.[row.id]"
                   @fire-limit="onFireLimitChange"
                   @bearing="onBearingTypeChange"
                   @coating="onCoatingTypeChange"
@@ -209,6 +210,7 @@
               v-for="(row, i) in ungroupedRows"
               :key="row.id"
               :row="row"
+              :issue="issues?.[row.id]"
               :index="rowNo(row.id)"
               :selected="selectedIds.has(row.id)"
               :length-value="lengthDraft[row.id] ?? formatLength(row.lengthM)"
@@ -259,7 +261,12 @@ export interface ElementGroup {
   rowIds: number[];
 }
 
-const props = defineProps<{ rows: OgzRow[]; emptyText: string }>();
+const props = defineProps<{
+  rows: OgzRow[];
+  emptyText: string;
+  /** Вердикты движка по строкам: id строки → сообщение (покрытие не подходит). */
+  issues?: Record<number, string>;
+}>();
 const emit = defineEmits<{
   (e: "edit", row: OgzRow): void;
   (e: "add"): void;
@@ -498,16 +505,14 @@ function applyGroupAttrs(groupId: string): void {
   }
 }
 
+/**
+ * Смена предела ОС строки. Покрытие НЕ сбрасываем: несовместимое сочетание
+ * остаётся видимым, а строка получает подсказку (быструю — по диапазону R и
+ * точную — от движка калькулятора). Молчаливая очистка скрывала бы ошибку.
+ */
 function onFireLimitChange(row: OgzRow, value: string): void {
   if (value === row.fireLimit) return;
-  const patch: OgzRowPatch = { fireLimit: value };
-  if (
-    row.coatingType &&
-    !isCoatingAvailableForFireLimit(row.coatingType, value)
-  ) {
-    patch.coatingType = "";
-  }
-  emit("patch", row.id, patch);
+  emit("patch", row.id, { fireLimit: value });
 }
 
 function onBearingTypeChange(row: OgzRow, value: string): void {

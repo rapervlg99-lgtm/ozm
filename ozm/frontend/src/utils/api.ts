@@ -30,6 +30,20 @@ export async function postCalc(req: CalcRequest): Promise<CalcResponse> {
   return data
 }
 
+/** Вердикт движка по конструкциям: то же, что калькулятор пишет в результатах. */
+export interface CalcCheckRow {
+  id: string
+  exclusion: string
+  dpr: number
+  delta: number
+  factR: number
+}
+
+export async function postCalcCheck(req: CalcRequest): Promise<CalcCheckRow[]> {
+  const { data } = await api.post<{ elements: CalcCheckRow[] }>('/calc/check', req)
+  return data.elements || []
+}
+
 export async function exportFile(format: 'pdf' | 'xlsx' | 'docx', calcId: string): Promise<Blob> {
   const { data } = await api.post(`/export/${format}`, { calcId }, { responseType: 'blob' })
   return data

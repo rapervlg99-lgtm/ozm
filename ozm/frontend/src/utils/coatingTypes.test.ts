@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   availableCoatingTypes,
+  coatingFireLimitRange,
+  coatingFitHint,
+  coatingFitsRow,
   coatingTypeChoices,
   isCoatingAvailableForFireLimit,
   parseFireLimitMinutes
@@ -63,4 +66,30 @@ describe("coatingTypes", () => {
     expect(list).toContain("ТЕХНО ОЗМ");
     expect(list).not.toContain("TAIKOR FP Epoxy");
   });
+
+  it("подсказка объясняет, почему покрытие не подходит к пределу ОС", () => {
+    expect(coatingFitHint("TAIKOR FP Graphite", "R180")).toBe(
+      "TAIKOR FP Graphite не подходит для R180 — это покрытие бывает при R15…R120"
+    );
+    expect(coatingFitHint("TAIKOR FP Extra + TAIKOR FP Graphite", "R45")).toBe(
+      "TAIKOR FP Extra + TAIKOR FP Graphite не подходит для R45 — это покрытие бывает при R90…R120"
+    );
+    // совместимые сочетания молчат
+    expect(coatingFitHint("TAIKOR FP Graphite", "R120")).toBe("");
+    expect(coatingFitHint("ТЕХНО ОЗМ", "R240")).toBe("");
+    expect(coatingFitHint("АКЗ", "R240")).toBe("");
+    expect(coatingFitHint("", "R180")).toBe("");
+  });
+
+  it("пределы применимости покрытий", () => {
+    expect(coatingFireLimitRange("TAIKOR FP Epoxy")).toBe("R15…R120");
+    expect(coatingFireLimitRange("TAIKOR FP Extra + TAIKOR FP Graphite")).toBe("R90…R120");
+    expect(coatingFireLimitRange("ТЕХНО ОЗМ")).toBe("");
+  });
+
+  it("проверка строки: покрытие и её предел ОС", () => {
+    expect(coatingFitsRow({ coatingType: "TAIKOR FP Graphite", fireLimit: "R180" })).toBe(false)
+    expect(coatingFitsRow({ coatingType: "TAIKOR FP Graphite", fireLimit: "R120" })).toBe(true)
+    expect(coatingFitsRow({ coatingType: "", fireLimit: "R180" })).toBe(true)
+  })
 });

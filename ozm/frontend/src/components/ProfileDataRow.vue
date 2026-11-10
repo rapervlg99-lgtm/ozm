@@ -124,11 +124,13 @@
         </option>
       </select>
     </td>
-    <td>
+    <td class="pdr__coating-cell">
       <select
         class="pdr__select pdr__coating"
+        :class="{ pdr__select_warn: !!coatingHint }"
         :value="row.coatingType"
         :aria-label="`Покрытие ${label}`"
+        :title="coatingHint || undefined"
         @change="
           $emit('coating', row, ($event.target as HTMLSelectElement).value)
         "
@@ -142,6 +144,12 @@
           {{ t }}
         </option>
       </select>
+      <!-- Подсказка появляется, как только покрытие и предел ОС несовместимы:
+           «TAIKOR FP Graphite не подходит для R180 — бывает при R15…R120». -->
+      <div v-if="coatingHint" class="pdr__coating-hint" role="status">
+        <TnIcon name="info" :size="16" />
+        <span>{{ coatingHint }}</span>
+      </div>
     </td>
     <td class="pdr__actions" @mousedown.stop>
       <!-- иконки вместо подписей: три текстовые кнопки занимали 210 px -->
@@ -159,7 +167,7 @@ import ProfileMarkInput from "./ProfileMarkInput.vue";
 import StatusTag from "./StatusTag.vue";
 import TnIcon from "./ui/TnIcon.vue";
 import { bearingTypeChoices } from "@/utils/bearingTypes";
-import { coatingTypeChoices } from "@/utils/coatingTypes";
+import { coatingFitHint, coatingTypeChoices } from "@/utils/coatingTypes";
 import { profileCategory, profileFamilyLabel } from "@/utils/ocrImport";
 import type { ProfileOption } from "@/utils/profileSuggest";
 import { constructionLabel as formatConstruction } from "@/utils/constructionLabel";
@@ -169,6 +177,8 @@ import type { OgzRow, ProfileCandidate } from "@/types/ogz";
 
 const props = defineProps<{
   row: OgzRow;
+  /** Вердикт движка: покрытие не обеспечивает предел ОС ('' — претензий нет). */
+  issue?: string;
   index: number;
   selected: boolean;
   lengthValue: string;
@@ -220,6 +230,15 @@ const familyLabel = computed(() => profileFamilyLabel(props.row) || "—");
 // колонках даёт несколько строк ОГЗ — по одной на элемент: предел
 // огнестойкости назначается именно элементу, а не профилю.
 const constructionLabel = computed(() => formatConstruction(props.row.construction) || "—");
+
+/**
+ * Подсказка по покрытию. Сначала вердикт движка (он учитывает и δпр, и тип
+ * конструкции — те же правила, что в калькуляторе), затем быстрая проверка
+ * диапазона R: она срабатывает сразу, пока движок ещё считает.
+ */
+const coatingHint = computed(
+  () => (props.issue || "").trim() || coatingFitHint(props.row.coatingType, props.row.fireLimit)
+);
 
 const needsAttention = computed(
   () =>
@@ -277,6 +296,24 @@ const needsAttention = computed(
 
 .pdr__bearing {
   width: 118px;
+}
+
+.pdr__select_warn {
+  border-color: var(--content-system-warning);
+}
+
+.pdr__coating-cell {
+  max-width: 220px;
+}
+
+.pdr__coating-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: var(--font-size-body-small);
+  line-height: var(--font-lineHeight-body-small);
+  color: var(--content-system-warning);
 }
 
 .pdr__coating {

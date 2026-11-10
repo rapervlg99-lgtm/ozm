@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProfileRowsTable from '../../components/ProfileRowsTable.vue'
 import RowsTable from '../../components/RowsTable.vue'
@@ -218,6 +218,14 @@ async function prefill(): Promise<void> {
   }
 }
 
+// Проверка «покрытие ↔ предел ОС ↔ тип конструкции» движком калькулятора:
+// пересчитываем после загрузки задания и после правок строк (с задержкой).
+watch(
+  () => [job.profileRows.map((r) => [r.id, r.coatingType, r.fireLimit, r.bearingType, r.profileMark, r.heatingSides].join(':')).join('|')],
+  () => job.scheduleCoatingCheck(),
+  { immediate: false }
+)
+
 onMounted(async () => {
   await job.load(jobId.value)
   if (job.job?.id === DEMO_JOB_ID && jobId.value !== DEMO_JOB_ID) {
@@ -228,6 +236,7 @@ onMounted(async () => {
   // жёлтым блоком над таблицей, а не зелёным уведомлением, и не даём затереть
   // следующим «Строка обновлена».
   importNotes.value = job.takeImportNotes()
+  job.scheduleCoatingCheck()
 })
 </script>
 
@@ -279,7 +288,11 @@ onMounted(async () => {
            пустеет по мере правок) и «почему» (заметки импорта из OCR, статичные,
            можно скрыть). Блок «без предела ОС» остаётся отдельным: это другое
            действие и другой момент — перед отправкой в калькулятор. -->
-      <div v-if="job.needsAttentionCount > 0 || importNotes.length" class="ogz__banner ogz__banner_check" role="status">
+      <div
+        v-if="job.needsAttentionCount > 0 || job.coatingMismatchCount > 0 || job.engineIssueCount > 0 || importNotes.length"
+        class="ogz__banner ogz__banner_check"
+        role="status"
+      >
         <div class="ogz__banner-title">Что проверить после распознавания</div>
         <template v-if="job.needsAttentionCount > 0">
           <div class="ogz__banner-sub">Требуют проверки или ввода массы — проверь перед подтверждением:</div>
@@ -291,6 +304,24 @@ onMounted(async () => {
             <li v-if="job.attentionRows.sheet.length">
               <button type="button" class="ogz__banner-link" @click="tab = 'sheet'">Листовая сталь</button>:
               {{ rowsPhrase(job.attentionRows.sheet) }}
+            </li>
+          </ul>
+        </template>
+        <template v-if="job.engineIssueCount > 0">
+          <div class="ogz__banner-sub">Движок калькулятора не подтверждает сочетание:</div>
+          <ul class="ogz__banner-list">
+            <li>
+              <button type="button" class="ogz__banner-link" @click="tab = 'profile'">Профильный погонаж</button>:
+              {{ rowsPhrase(job.engineIssueNumbers) }} — {{ job.engineIssueSample }}
+            </li>
+          </ul>
+        </template>
+        <template v-if="job.coatingMismatchCount > 0">
+          <div class="ogz__banner-sub">Покрытие не подходит к пределу огнестойкости:</div>
+          <ul class="ogz__banner-list">
+            <li>
+              <button type="button" class="ogz__banner-link" @click="tab = 'profile'">Профильный погонаж</button>:
+              {{ rowsPhrase(job.coatingMismatchRows) }} — выберите другое покрытие или другой предел ОС.
             </li>
           </ul>
         </template>
@@ -350,6 +381,7 @@ onMounted(async () => {
 
         <template v-else>
           <ProfileRowsTable
+              :issues="job.engineIssues"
             v-show="tab === 'profile'"
             ref="profileTableRef"
             :rows="job.profileRows"

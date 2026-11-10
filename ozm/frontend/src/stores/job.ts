@@ -1,4 +1,7 @@
 import { defineStore } from 'pinia'
+import { coatingFitsRow } from '../utils/coatingTypes'
+import { buildCheckRequest, describeIssue, issuesFromResponse } from '../utils/coatingCheck'
+import { fetchDicts, postCalcCheck } from '../utils/api'
 import { computed, ref } from 'vue'
 import {
   confirmExtJob,
@@ -46,6 +49,82 @@ export const useJobStore = defineStore('job', () => {
     profile: profileRows.value.map((r, i) => (needsAttention(r) ? i + 1 : 0)).filter(Boolean),
     sheet: sheetRows.value.map((r, i) => (needsAttention(r) ? i + 1 : 0)).filter(Boolean)
   }))
+
+  /**
+   * Номера строк, где тип покрытия не подходит к пределу огнестойкости
+   * (например, TAIKOR FP Graphite при R180): такие строки уйдут в калькулятор
+   * с покрытием, которого при этом пределе не бывает.
+   */
+  const coatingMismatchRows = computed(() =>
+    profileRows.value.map((r, i) => (coatingFitsRow(r) ? 0 : i + 1)).filter(Boolean)
+  )
+
+  const coatingMismatchCount = computed(() => coatingMismatchRows.value.length)
+
+  /** Номера строк, по которым движок не подтвердил сочетание покрытия и R. */
+  const engineIssueNumbers = computed(() =>
+    profileRows.value.map((r, i) => (engineIssues.value[r.id] ? i + 1 : 0)).filter(Boolean)
+  )
+  const engineIssueCount = computed(() => engineIssueNumbers.value.length)
+  /** Первое сообщение движка — для подсказки в баннере. */
+  const engineIssueSample = computed(() => {
+    for (const r of profileRows.value) {
+      const m = engineIssues.value[r.id]
+      if (m) return m
+    }
+    return ''
+  })
+
+  /**
+   * Вердикты движка по сочетаниям «покрытие + предел ОС + тип конструкции»:
+   * те же правила, что в калькуляторе. Ключ — id строки, значение — сообщение
+   * («недостижимый предел огнестойкости R180 …»).
+   */
+  const engineIssues = ref<Record<number, string>>({})
+  const engineChecking = ref(false)
+  let checkTimer: ReturnType<typeof setTimeout> | null = null
+
+  /** Пересчитать вердикты по текущим строкам (с задержкой, чтобы не дёргать на каждый символ). */
+  function scheduleCoatingCheck(roll?: unknown[]): void {
+    if (checkTimer) clearTimeout(checkTimer)
+    checkTimer = setTimeout(async () => {
+      const rows = profileRows.value.filter((r) => r.coatingType.trim() && r.fireLimit.trim())
+      if (!rows.length) {
+        engineIssues.value = {}
+        return
+      }
+      let dict = roll as never[] | undefined
+      if (!dict || !dict.length) {
+        try {
+          dict = (await fetchDicts()).roll as never[]
+        } catch {
+          engineIssues.value = {}
+          return
+        }
+      }
+      const { req, ids } = buildCheckRequest(rows, dict as never)
+      if (!ids.length) {
+        engineIssues.value = {}
+        return
+      }
+      engineChecking.value = true
+      try {
+        const elements = await postCalcCheck(req)
+        const issues = issuesFromResponse(ids, elements)
+        const next: Record<number, string> = {}
+        for (const i of issues) {
+          const row = profileRows.value.find((r) => r.id === i.rowId)
+          next[i.rowId] = describeIssue(row || {}, i.message)
+        }
+        engineIssues.value = next
+      } catch {
+        // движок недоступен — не показываем ложных предупреждений
+        engineIssues.value = {}
+      } finally {
+        engineChecking.value = false
+      }
+    }, 700)
+  }
 
   const missingFireLimitCount = computed(() =>
     profileRows.value.filter(
@@ -190,6 +269,14 @@ export const useJobStore = defineStore('job', () => {
     isConfirmed,
     needsAttentionCount,
     attentionRows,
+    coatingMismatchRows,
+    coatingMismatchCount,
+    engineIssues,
+    engineChecking,
+    engineIssueNumbers,
+    engineIssueCount,
+    engineIssueSample,
+    scheduleCoatingCheck,
     missingFireLimitCount,
     prefillableCount,
     load,
