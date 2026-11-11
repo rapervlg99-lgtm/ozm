@@ -323,6 +323,14 @@ func (e *Engine) resolveDims(el models.ElementInput) map[string]float64 {
 						dims[k] = v
 					}
 				}
+				// У части записей старого справочника размеров нет вовсе
+				// (например, «L90×9» из ГОСТ 8509-93): тогда разбираем
+				// обозначение — иначе площадь сечения 0 и δпр не считается.
+				if len(dims) == 0 {
+					for k, v := range dimsFromLabel(r.Shape, r.Label) {
+						dims[k] = v
+					}
+				}
 				break
 			}
 		}
@@ -384,3 +392,48 @@ func round1(v float64) float64 { return math.Round(v*10) / 10 }
 func round2(v float64) float64 { return math.Round(v*100) / 100 }
 func round3(v float64) float64 { return math.Round(v*1000) / 1000 }
 func round0(v float64) float64 { return math.Round(v) }
+
+// dimsFromLabel — размеры из обозначения марки, когда в справочнике их нет.
+// Понимает уголки («L90×9» — равнополочный, «L90×56×6»/«90/56×5.5» —
+// неравнополочный), а также простые «A×B×t» у труб и гнутых профилей.
+func dimsFromLabel(shape, label string) map[string]float64 {
+	var nums []float64
+	cur := ""
+	flush := func() {
+		if cur == "" {
+			return
+		}
+		if v, err := strconv.ParseFloat(strings.ReplaceAll(cur, ",", "."), 64); err == nil {
+			nums = append(nums, v)
+		}
+		cur = ""
+	}
+	for _, r := range label {
+		if (r >= '0' && r <= '9') || r == ',' || r == '.' {
+			cur += string(r)
+			continue
+		}
+		flush()
+	}
+	flush()
+	if len(nums) < 2 {
+		return nil
+	}
+	out := map[string]float64{}
+	switch {
+	case strings.HasPrefix(shape, "corner") && len(nums) >= 3:
+		// неравнополочный: большая полка / меньшая × толщина
+		out["B"], out["b"], out["t"], out["s"] = nums[0], nums[1], nums[2], nums[2]
+		out["h"] = nums[0]
+	case strings.HasPrefix(shape, "corner"):
+		// равнополочный: полка × толщина
+		out["b"], out["t"], out["s"] = nums[0], nums[1], nums[1]
+		out["h"] = nums[0]
+	case len(nums) >= 3:
+		out["h"], out["b"], out["s"], out["t"] = nums[0], nums[1], nums[2], nums[2]
+	default:
+		out["h"], out["s"], out["t"] = nums[0], nums[1], nums[1]
+		out["b"] = nums[0]
+	}
+	return out
+}

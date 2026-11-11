@@ -79,3 +79,20 @@ func TestEngineCalculatesPlateElement(t *testing.T) {
 		t.Fatalf("толщина и объём должны быть посчитаны: δ=%v V=%v", el.Delta, el.Volume)
 	}
 }
+
+func TestDimsFromLabelWhenCatalogHasNone(t *testing.T) {
+	// «L90×9» из старого справочника приходит без размеров: разбираем марку
+	dims := dimsFromLabel("corner_e", "L90×9")
+	if dims["b"] != 90 || dims["t"] != 9 || dims["h"] != 90 {
+		t.Fatalf("равнополочный уголок: %v", dims)
+	}
+	f := sectionArea("corner_e", dims)
+	if f <= 0 {
+		t.Fatalf("площадь сечения 0 при размерах %v", dims)
+	}
+	// неравнополочный «90/56×5,5»
+	dims = dimsFromLabel("corner_ue", "90/56×5,5")
+	if dims["B"] != 90 || dims["b"] != 56 || dims["t"] != 5.5 {
+		t.Fatalf("неравнополочный уголок: %v", dims)
+	}
+}
