@@ -401,6 +401,8 @@ onMounted(async () => {
             :rows="job.sheetRows"
             empty-text="В этом задании нет листовой стали."
             @edit="openRowEditor"
+            @copy="copyRow"
+            @remove="removeRow"
             @patch="patchOne"
           />
         </template>

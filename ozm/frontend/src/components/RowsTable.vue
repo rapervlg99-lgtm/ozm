@@ -47,7 +47,23 @@
                 @update:model-value="onHeatingChange(row, $event)"
               />
             </td>
-            <td>{{ row.fireLimit || "—" }}</td>
+            <td>
+              <select
+                class="rows__select"
+                :value="row.fireLimit"
+                :aria-label="`Предел ОС ${row.name || row.profileMark || 'строка'}`"
+                @change="onFireLimitChange(row, ($event.target as HTMLSelectElement).value)"
+              >
+                <option value="">—</option>
+                <option
+                  v-for="r in fireLimitChoices(row.fireLimit)"
+                  :key="r"
+                  :value="r"
+                >
+                  {{ r }}
+                </option>
+              </select>
+            </td>
             <td>
               <select
                 class="rows__select"
@@ -82,8 +98,10 @@
                 </option>
               </select>
             </td>
-            <td>
-              <button type="button" class="btn-ghost btn-sm" aria-label="Редактировать строку" @click="$emit('edit', row)">Изм.</button>
+            <td class="rows__acts">
+              <button type="button" class="rows__act" title="Редактировать" aria-label="Редактировать строку" @click="$emit('edit', row)"><TnIcon name="edit" :size="20" /></button>
+              <button type="button" class="rows__act" title="Копировать" aria-label="Копировать строку" @click="$emit('copy', row)"><TnIcon name="copy" :size="20" /></button>
+              <button type="button" class="rows__act rows__del" title="Удалить" aria-label="Удалить строку" @click="$emit('remove', row)"><TnIcon name="delete" :size="20" /></button>
             </td>
           </tr>
         </tbody>
@@ -95,14 +113,18 @@
 <script setup lang="ts">
 import HeatingSidesPicker from "./HeatingSidesPicker.vue";
 import StatusTag from "./StatusTag.vue";
+import TnIcon from "./ui/TnIcon.vue";
 import { bearingTypeChoices } from "@/utils/bearingTypes";
 import { coatingTypeChoices } from "@/utils/coatingTypes";
+import { fireLimitChoices } from "@/utils/fireLimits";
 import { num } from "@/utils/format";
 import type { OgzRow, OgzRowPatch } from "@/types/ogz";
 
 defineProps<{ kind: "profile" | "sheet"; rows: OgzRow[]; emptyText: string }>();
 const emit = defineEmits<{
   (e: "edit", row: OgzRow): void;
+  (e: "copy", row: OgzRow): void;
+  (e: "remove", row: OgzRow): void;
   (e: "patch", rowId: number, patch: OgzRowPatch): void;
 }>();
 
@@ -113,6 +135,11 @@ function cell(v: number): string {
 function onHeatingChange(row: OgzRow, value: string): void {
   if (value === row.heatingSides) return;
   emit("patch", row.id, { heatingSides: value });
+}
+
+function onFireLimitChange(row: OgzRow, value: string): void {
+  if (value === row.fireLimit) return;
+  emit("patch", row.id, { fireLimit: value });
 }
 
 function onBearingTypeChange(row: OgzRow, value: string): void {
@@ -153,7 +180,9 @@ function needsAttention(row: OgzRow): boolean {
 
 .rows__table th,
 .rows__table td {
-  padding: 8px 12px;
+  /* после добавления колонки действий таблица не должна уезжать за контейнер:
+     отступы 8 px вместо 12 px дают запас по ширине */
+  padding: 8px 8px;
   text-align: left;
   white-space: nowrap;
   border-bottom: 1px solid var(--border-secondary-enabled);
@@ -171,6 +200,44 @@ function needsAttention(row: OgzRow): boolean {
 .rows__idx {
   text-align: right;
   color: var(--content-secondary-enabled);
+}
+
+.rows__select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border-secondary-enabled);
+  border-radius: 8px;
+  background: var(--background-primary-a-enabled);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rows__acts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rows__act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--content-secondary-enabled);
+  cursor: pointer;
+}
+
+.rows__act:hover {
+  background: var(--background-secondary-a-enabled);
+  color: var(--content-primary-a-enabled);
+}
+
+.rows__del:hover {
+  color: var(--content-system-negative);
 }
 
 .rows__row_attention {

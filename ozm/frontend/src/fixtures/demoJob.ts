@@ -113,7 +113,30 @@ export function createDemoJob(): Job {
         heatingSides: "4"
       })
     ],
-    sheetRows: []
+    // Листовая сталь: площадь идёт справочно, но в форме у неё те же поля,
+    // что у профильного погонажа — предел ОС, тип конструкции, покрытие.
+    sheetRows: [
+      row({
+        id: 101,
+        name: "Лист 4 мм",
+        profileMark: "4×1250×2500",
+        profileRaw: "Лист 4×1250×2500",
+        gostProfile: "ГОСТ 19903-2015",
+        construction: "Настил",
+        ppNumber: "7",
+        isSheet: true,
+        massPerMeter: 31.4,
+        mass: 314,
+        lengthM: 0,
+        areaM2: 31.4,
+        classification: "справочно",
+        status: "Посчитано",
+        heatingSides: "4",
+        fireLimit: "R60",
+        bearingType: "Несущая",
+        coatingType: "ТЕХНО ОЗМ"
+      })
+    ]
   };
 }
 
