@@ -54,15 +54,6 @@
             <option v-for="r in fireLimitChoices(sec.group.fireLimit)" :key="r" :value="r">{{ r }}</option>
           </select>
           <select
-            v-model="sec.group.coatingType"
-            class="rows__select rows__coating-select"
-            aria-label="Тип покрытия группы"
-            @change="applyGroupAttrs(sec.group.id)"
-          >
-            <option value="">Покрытие…</option>
-            <option v-for="c in coatingTypeChoices(sec.group.coatingType, sec.group.fireLimit)" :key="c" :value="c">{{ c }}</option>
-          </select>
-          <select
             v-model="sec.group.bearingType"
             class="rows__select"
             aria-label="Тип конструкции группы"
@@ -70,6 +61,15 @@
           >
             <option value="">Тип…</option>
             <option v-for="t in bearingTypeChoices(sec.group.bearingType)" :key="t" :value="t">{{ t }}</option>
+          </select>
+          <select
+            v-model="sec.group.coatingType"
+            class="rows__select rows__coating-select"
+            aria-label="Тип покрытия группы"
+            @change="applyGroupAttrs(sec.group.id)"
+          >
+            <option value="">Покрытие…</option>
+            <option v-for="c in coatingTypeChoices(sec.group.coatingType, sec.group.fireLimit)" :key="c" :value="c">{{ c }}</option>
           </select>
           <span class="rows__group-count">{{ sec.rows.length }} эл.</span>
           <button type="button" class="btn-ghost btn-sm" aria-label="Удалить группу" @click="removeGroup(sec.group.id)">Удал.</button>

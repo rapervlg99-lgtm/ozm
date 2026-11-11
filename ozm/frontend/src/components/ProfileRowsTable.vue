@@ -61,21 +61,6 @@
               </option>
             </select>
             <select
-              v-model="win.group.coatingType"
-              class="prt__group-input prt__group-select prt__coating-select"
-              aria-label="Тип покрытия группы"
-              @change="applyGroupAttrs(win.group.id)"
-            >
-              <option value="">Покрытие…</option>
-              <option
-                v-for="c in coatingChoices(win.group.fireLimit)"
-                :key="c"
-                :value="c"
-              >
-                {{ c }}
-              </option>
-            </select>
-            <select
               v-model="win.group.bearingType"
               class="prt__group-input prt__group-select prt__bearing-select"
               aria-label="Тип конструкции группы"
@@ -88,6 +73,21 @@
                 :value="t"
               >
                 {{ t }}
+              </option>
+            </select>
+            <select
+              v-model="win.group.coatingType"
+              class="prt__group-input prt__group-select prt__coating-select"
+              aria-label="Тип покрытия группы"
+              @change="applyGroupAttrs(win.group.id)"
+            >
+              <option value="">Покрытие…</option>
+              <option
+                v-for="c in coatingChoices(win.group.fireLimit)"
+                :key="c"
+                :value="c"
+              >
+                {{ c }}
               </option>
             </select>
             <span class="prt__group-count">{{ win.rows.length }} эл.</span>

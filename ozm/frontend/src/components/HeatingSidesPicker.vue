@@ -192,6 +192,13 @@ const count = computed(() => ORDER.filter((s) => sides[s]).length);
 const caption = computed(() => {
   const c = count.value;
   if (c === 0) return props.compact ? "—" : "Не выбрано";
+  // У листа доступны только «снизу» и «сверху»: при выборе обеих сторон
+  // подпись «4 стороны» была бы неверной.
+  const visible = visibleOptions.value;
+  const visibleSelected = visible.filter((o) => sides[o.side]).length;
+  if (visible.length < 4 && visibleSelected === visible.length) {
+    return "сверху и снизу";
+  }
   if (c === 4) return "4 стороны";
   return ORDER.filter((s) => sides[s])
     .map((s) => LABELS[s])
