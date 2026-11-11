@@ -232,6 +232,30 @@ export function mapPrefillItem(
   }
   const hit = matchRoll(item.profileMark, pool, shapes || item.gostProfile ? buildRollIndex(pool) : index)
   const coat = mapCoatingType(item.coatingType)
+  // Лист приходит со своим видом сечения и размерами: марки в сортаменте у него
+  // нет, поэтому подбор по обозначению не нужен (и не сработал бы).
+  if (item.shape) {
+    const construction = item.construction || ""
+    const mark = item.profileMark || ""
+    const element: ElementInput = {
+      title: elementDisplayName(construction, mark),
+      construction,
+      shape: item.shape,
+      rollId: undefined,
+      dims: { ...(item.dims || {}) },
+      frType: mapBearingType(item.bearingType),
+      htLevel: mapFireLimit(item.fireLimit),
+      sides: mapHeatingSides(item.heatingSides),
+      lengthM: Number(item.lengthM) > 0 ? Number(item.lengthM) : 1,
+      quantity: 1,
+      coat,
+      method: coat === "1" ? "1" : "0",
+      primer: false,
+      enamel: false,
+      decor: true
+    }
+    return { element, profileMiss: false }
+  }
   const mark = item.profileMark || hit?.label || ''
   const construction = item.construction || ''
   // Вид профиля — из наименования группы спецификации («Швеллеры стальные…» →

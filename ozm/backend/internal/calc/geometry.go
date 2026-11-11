@@ -82,6 +82,15 @@ func sectionArea(shape string, dims map[string]float64) float64 {
 	pi := math.Pi
 
 	switch {
+	case shape == "plate":
+		// Лист: сечение — прямоугольник толщиной t и шириной b. Толщину берём
+		// из t, а если её не задали — из h (в справочнике размеров листа h —
+		// толщина, поэтому допускаем оба ключа).
+		th := t
+		if th == 0 {
+			th = h
+		}
+		return th * b
 	case shape == "channel_bent", shape == "channel_unequal":
 		b1 := b
 		if shape == "channel_unequal" {
@@ -152,6 +161,10 @@ func heatedPerimeter(shape string, dims map[string]float64, sides models.HeatedS
 	}
 
 	switch {
+	case shape == "plate":
+		// Лист обогревается сверху и/или снизу: боковые стороны не учитываем,
+		// поэтому δпр = t (обогрев с одной стороны) или t/2 (с двух).
+		return (T + B) * b
 	case shape == "channel_bent", shape == "channel_unequal":
 		b1 := b
 		if shape == "channel_unequal" {
@@ -201,6 +214,15 @@ func ozmAreas(lining int, dims map[string]float64, sides models.HeatedSides, sha
 	if L+T+Rr+Btm == 0 {
 		L, T, Rr, Btm = 1, 1, 1, 1
 	}
+	// Лист: защищаем плоские обогреваемые поверхности — сверху и/или снизу.
+	// «Короб» и «контур» для него не различаются, толщина плиты не добавляет
+	// площади по кромкам.
+	if shape == "plate" {
+		perimeter := (T + Btm) * b
+		sm := perimeter / 1000 * lengthM
+		return sm, sm
+	}
+
 	prot1 := 0.0
 	if T > 0 && Rr > 0 {
 		prot1 = 1
@@ -245,6 +267,9 @@ func claddingPerimeter(lining int, dims map[string]float64, sides models.HeatedS
 	L, T, Rr, Btm := sideVal(sides.Left), sideVal(sides.Top), sideVal(sides.Right), sideVal(sides.Bottom)
 	if L+T+Rr+Btm == 0 {
 		L, T, Rr, Btm = 1, 1, 1, 1
+	}
+	if shape == "plate" {
+		return (T + Btm) * b
 	}
 	prot1 := 0.0
 	if T > 0 && Rr > 0 {

@@ -25,6 +25,7 @@ const msg = ref('')
 const msgKind = ref<'ok' | 'err' | ''>('')
 const importNotes = ref<string[]>([])
 const profileTableRef = ref<InstanceType<typeof ProfileRowsTable> | null>(null)
+const sheetTableRef = ref<InstanceType<typeof ProfileRowsTable> | null>(null)
 
 function plural(n: number, one: string, few: string, many: string): string {
   const m10 = n % 10
@@ -202,7 +203,9 @@ async function prefill(): Promise<void> {
       notify('Нет элементов с назначенным R для калькулятора', 'err')
       return
     }
-    const tableGroups = profileTableRef.value?.getGroupsForPrefill?.() ?? []
+    const profileGroups = profileTableRef.value?.getGroupsForPrefill?.() ?? []
+    const sheetGroups = sheetTableRef.value?.getGroupsForPrefill?.() ?? []
+    const tableGroups = [...profileGroups, ...sheetGroups]
     const enriched = enrichPrefillWithGroups(
       payload,
       job.profileRows,
@@ -395,15 +398,21 @@ onMounted(async () => {
             @patch="patchOne"
             @patch-many="patchMany"
           />
-          <RowsTable
+          <ProfileRowsTable
             v-show="tab === 'sheet'"
+            ref="sheetTableRef"
             kind="sheet"
+            :issues="job.engineIssues"
             :rows="job.sheetRows"
             empty-text="В этом задании нет листовой стали."
             @edit="openRowEditor"
+            @add="addRow"
             @copy="copyRow"
             @remove="removeRow"
+            @copy-many="copyMany"
+            @remove-many="removeMany"
             @patch="patchOne"
+            @patch-many="patchMany"
           />
         </template>
       </div>

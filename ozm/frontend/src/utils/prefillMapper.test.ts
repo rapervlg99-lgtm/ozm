@@ -278,3 +278,37 @@ describe('предзаполнение после распознавания', (
     expect(mapped.groups.every((g) => g.title === '')).toBe(true)
   })
 })
+
+describe('листовая сталь в предзаполнении', () => {
+  it('лист приходит элементом с видом сечения plate и размерами', () => {
+    const mapped = mapPrefillPayload(
+      {
+        items: [
+          {
+            profileMark: '4×1250×2500',
+            shape: 'plate',
+            dims: { t: 4, b: 1250 },
+            areaM2: 25,
+            construction: 'Настил',
+            lengthM: 20,
+            heatingSides: 'сверху, снизу',
+            fireLimit: 'R60',
+            bearingType: 'Несущая',
+            coatingType: 'ТЕХНО ОЗМ'
+          }
+        ],
+        groups: [{ title: '', rowIds: [1] }]
+      } as any,
+      []
+    )
+    expect(mapped.elements).toHaveLength(1)
+    const el = mapped.elements[0].element
+    expect(el.shape).toBe('plate')
+    expect(el.dims).toEqual({ t: 4, b: 1250 })
+    expect(el.htLevel).toBe(60)
+    expect(el.coat).toBe('1')
+    expect(el.lengthM).toBe(20)
+    // марка не нашлась в сортаменте, но это не ошибка профиля
+    expect(mapped.elements[0].profileMiss).toBe(false)
+  })
+})

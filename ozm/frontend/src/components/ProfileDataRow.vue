@@ -81,6 +81,7 @@
     <td @mousedown.stop>
       <HeatingSidesPicker
         compact
+        :only="[...sideOptions]"
         :model-value="row.heatingSides.trim() || '4'"
         :aria-label="`Обогрев ${label}`"
         @update:model-value="$emit('heating', row, $event)"
@@ -177,6 +178,8 @@ import type { OgzRow, ProfileCandidate } from "@/types/ogz";
 
 const props = defineProps<{
   row: OgzRow;
+  /** 'profile' — профильный погонаж, 'sheet' — листовая сталь. */
+  kind?: "profile" | "sheet";
   /** Вердикт движка: покрытие не обеспечивает предел ОС ('' — претензий нет). */
   issue?: string;
   index: number;
@@ -200,6 +203,10 @@ defineEmits<{
   (e: "copy", row: OgzRow): void;
   (e: "remove", row: OgzRow): void;
 }>();
+
+/** Лист обогревается только сверху и снизу — боковые стороны не предлагаем. */
+const isSheet = computed(() => props.kind === "sheet" || !!props.row.isSheet);
+const sideOptions = computed(() => (isSheet.value ? (["top", "bottom"] as const) : (["bottom", "top", "left", "right"] as const)));
 
 const label = computed(() =>
   `${props.row.profileMark || props.row.profileRaw || "профиль"} ${props.row.construction || ""}`.trim()

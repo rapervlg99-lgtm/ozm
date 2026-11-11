@@ -285,6 +285,7 @@ func (h *handlers) getPrefill(w http.ResponseWriter, r *http.Request) {
 			FireLimit:    row.FireLimit,
 			BearingType:  row.BearingType,
 			CoatingType:  row.CoatingType,
+			MassPerM2:    row.MassPerMeter,
 		})
 	}
 	writeJSON(w, http.StatusOK, prefill.Build(id, in))

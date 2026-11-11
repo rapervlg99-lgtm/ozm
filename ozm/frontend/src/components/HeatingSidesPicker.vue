@@ -24,7 +24,7 @@
         @mousedown.stop
       >
         <label
-          v-for="opt in OPTIONS"
+          v-for="opt in visibleOptions"
           :key="opt.side"
           class="hsp__option"
         >
@@ -51,11 +51,14 @@ const props = withDefaults(
     modelValue?: string;
     compact?: boolean;
     ariaLabel?: string;
+    /** Какие стороны показывать: у листа только «снизу» и «сверху». */
+    only?: Side[];
   }>(),
   {
     modelValue: "",
     compact: false,
-    ariaLabel: "Стороны обогрева"
+    ariaLabel: "Стороны обогрева",
+    only: () => ["bottom", "top", "left", "right"]
   }
 );
 const emit = defineEmits<{ (e: "update:modelValue", value: string): void }>();
@@ -80,6 +83,7 @@ const OPTIONS: { side: Side; label: string }[] = [
 ];
 
 const ORDER = OPTIONS.map((o) => o.side);
+const visibleOptions = computed(() => OPTIONS.filter((o) => props.only.includes(o.side)));
 const LABELS: Record<Side, string> = Object.fromEntries(
   OPTIONS.map((o) => [o.side, o.label])
 ) as Record<Side, string>;

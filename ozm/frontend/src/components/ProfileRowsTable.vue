@@ -130,6 +130,7 @@
                   @length-commit="commitLength"
                   @heating="onHeatingChange"
                   :issue="issues?.[row.id]"
+                  :kind="props.kind"
                   @fire-limit="onFireLimitChange"
                   @bearing="onBearingTypeChange"
                   @coating="onCoatingTypeChange"
@@ -264,6 +265,9 @@ export interface ElementGroup {
 const props = defineProps<{
   rows: OgzRow[];
   emptyText: string;
+  /** 'sheet' — вкладка «Листовая сталь»: те же поля, но сторон обогрева две. */
+  kind?: "profile" | "sheet";
+  kindLabel?: string;
   /** Вердикты движка по строкам: id строки → сообщение (покрытие не подходит). */
   issues?: Record<number, string>;
 }>();

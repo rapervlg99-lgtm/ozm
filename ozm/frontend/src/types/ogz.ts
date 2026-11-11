@@ -82,6 +82,12 @@ export interface OgzRowPatch {
 
 export interface PrefillItem {
   profileMark: string
+  /** Вид сечения, если он известен заранее (лист: 'plate'). */
+  shape?: string
+  /** Размеры сечения для листа: толщина t и ширина b, мм. */
+  dims?: Record<string, number>
+  /** Площадь листа, м² (справочно). */
+  areaM2?: number
   /** Preserve assortment standard from the source specification. */
   gostProfile?: string
   /** OCR construction column (Балки, Ригели, …) — used for element title. */

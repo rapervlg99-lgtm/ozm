@@ -125,5 +125,17 @@
         "picture": "tube_sq"
       }
     ]
+  },
+  {
+    "id": "plate",
+    "label": "лист",
+    "hard": 0,
+    "shapes": [
+      {
+        "id": "plate",
+        "label": "лист",
+        "picture": "plate"
+      }
+    ]
   }
 ]
