@@ -25,7 +25,7 @@ const msg = ref('')
 const msgKind = ref<'ok' | 'err' | ''>('')
 const importNotes = ref<string[]>([])
 const profileTableRef = ref<InstanceType<typeof ProfileRowsTable> | null>(null)
-const sheetTableRef = ref<InstanceType<typeof ProfileRowsTable> | null>(null)
+const sheetTableRef = ref<InstanceType<typeof RowsTable> | null>(null)
 
 function plural(n: number, one: string, few: string, many: string): string {
   const m10 = n % 10
@@ -398,15 +398,13 @@ onMounted(async () => {
             @patch="patchOne"
             @patch-many="patchMany"
           />
-          <ProfileRowsTable
+          <RowsTable
             v-show="tab === 'sheet'"
             ref="sheetTableRef"
             kind="sheet"
-            :issues="job.engineIssues"
             :rows="job.sheetRows"
             empty-text="В этом задании нет листовой стали."
             @edit="openRowEditor"
-            @add="addRow"
             @copy="copyRow"
             @remove="removeRow"
             @copy-many="copyMany"

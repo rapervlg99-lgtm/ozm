@@ -131,7 +131,7 @@ export function createDemoJob(): Job {
         areaM2: 31.4,
         classification: "справочно",
         status: "Посчитано",
-        heatingSides: "4",
+        heatingSides: "сверху, снизу",
         fireLimit: "R60",
         bearingType: "Несущая",
         coatingType: "ТЕХНО ОЗМ"
