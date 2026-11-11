@@ -312,3 +312,28 @@ describe('листовая сталь в предзаполнении', () => {
     expect(mapped.elements[0].profileMiss).toBe(false)
   })
 })
+
+describe('покрытия TAIKOR в предзаполнении', () => {
+  it('для TAIKOR включаются грунт и финишная эмаль', () => {
+    const mapped = mapPrefillPayload(
+      {
+        items: [
+          { profileMark: '40Б1', fireLimit: 'R90', coatingType: 'TAIKOR FP Graphite', lengthM: 6 },
+          { profileMark: '40Б1', fireLimit: 'R60', coatingType: 'ТЕХНО ОЗМ', lengthM: 6 }
+        ],
+        groups: [{ title: '', rowIds: [1, 2] }]
+      } as any,
+      [
+        { id: 'r79', label: '40Б1', shape: 'I-beam', standard: 'ГОСТ 26020-83', massPerMeter: 56.6,
+          dims: { h: 396, b: 199, s: 7, t: 11.2, R: 13 } }
+      ] as any
+    )
+    expect(mapped.elements[0].element.coat).toBe('3')
+    expect(mapped.elements[0].element.primer).toBe(true)
+    expect(mapped.elements[0].element.enamel).toBe(true)
+    // у ОЗМ таких слоёв нет
+    expect(mapped.elements[1].element.coat).toBe('1')
+    expect(mapped.elements[1].element.primer).toBe(false)
+    expect(mapped.elements[1].element.enamel).toBe(false)
+  })
+})

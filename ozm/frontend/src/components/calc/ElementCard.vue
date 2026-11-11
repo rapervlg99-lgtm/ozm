@@ -90,7 +90,8 @@ const picture = computed(() => {
   return props.el.shape
 })
 
-const isTaikor = computed(() => ['2', '3', '4'].includes(props.el.coat))
+const TAIKOR_COATS = ['2', '3', '4']
+const isTaikor = computed(() => TAIKOR_COATS.includes(props.el.coat))
 const isAkz = computed(() => props.el.coat === '1.5')
 const isOzm = computed(() => props.el.coat === '1')
 
@@ -99,6 +100,15 @@ const isOzm = computed(() => props.el.coat === '1')
  *  был сброшен, — иначе движок сообщит, что предел не задан. */
 function onCoat(v: string) {
   props.el.coat = v
+  // У покрытий TAIKOR грунт и финишная эмаль входят в систему: включаем оба
+  // чекбокса сразу, чтобы ведомость материалов считалась по полной схеме.
+  if (TAIKOR_COATS.includes(v)) {
+    props.el.primer = true
+    props.el.enamel = true
+  } else {
+    props.el.primer = false
+    props.el.enamel = false
+  }
   if (v === '1.5') {
     props.el.htLevel = 0
     return

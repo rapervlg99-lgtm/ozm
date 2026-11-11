@@ -66,6 +66,8 @@ export function enrichPrefillWithGroups(
   }
 }
 
+const TAIKOR_COAT_IDS = ['2', '3', '4']
+
 const COAT_BY_LABEL: Record<string, string> = {
   'техно озм': '1',
   'taikor fp epoxy': '2',
@@ -250,8 +252,8 @@ export function mapPrefillItem(
       quantity: 1,
       coat,
       method: coat === "1" ? "1" : "0",
-      primer: false,
-      enamel: false,
+      primer: TAIKOR_COAT_IDS.includes(coat),
+      enamel: TAIKOR_COAT_IDS.includes(coat),
       decor: true
     }
     return { element, profileMiss: false }
@@ -275,8 +277,9 @@ export function mapPrefillItem(
     quantity: 1,
     coat,
     method: coat === '1' ? '1' : '0',
-    primer: false,
-    enamel: false,
+    // TAIKOR — система с грунтом и финишной эмалью: они идут вместе
+    primer: TAIKOR_COAT_IDS.includes(coat),
+    enamel: TAIKOR_COAT_IDS.includes(coat),
     decor: true
   }
   return {
