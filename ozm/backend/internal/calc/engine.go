@@ -171,7 +171,7 @@ func (e *Engine) calcElement(groupID, elID string, el models.ElementInput, group
 	}
 	pi := heatedPerimeter(el.Shape, dims, el.Sides)
 	dpr := deltaPr(f, pi)
-	trace = append(trace, fmt.Sprintf("%s: F=%.0f Π=%.0f δпр=%.1f", elID, f, pi, dpr))
+	trace = append(trace, fmt.Sprintf("%s: F=%.0f Π=%.0f δпр=%.2f", elID, f, pi, dpr))
 
 	// Полный периметр: АКЗ и финишное покрытие наносят по всей поверхности, а
 	// огнезащиту считают по нагреваемым сторонам — в спецификации это две
@@ -219,7 +219,7 @@ func (e *Engine) calcElement(groupID, elID string, el models.ElementInput, group
 		er.Delta = delta
 		er.FactR = rFact
 		if !ok {
-			er.Exclusion = fmt.Sprintf("недостижимый предел огнестойкости R%.0f при δпр=%.1f (Rфакт≈%.0f)", el.HtLevel, dpr, rFact)
+			er.Exclusion = fmt.Sprintf("недостижимый предел огнестойкости R%.0f при δпр=%.2f (Rфакт≈%.0f)", el.HtLevel, dpr, rFact)
 			return er, lines, trace
 		}
 		sv, sm := ozmAreas(lining, dims, el.Sides, el.Shape, delta, el.LengthM)
@@ -250,7 +250,7 @@ func (e *Engine) calcElement(groupID, elID string, el models.ElementInput, group
 	// TAIKOR coats 2/3/4
 	delta, rate, heat, ok := lookupX500(e.cfg.X500, int(coatN), el.HtLevel, dpr)
 	if !ok {
-		er.Exclusion = fmt.Sprintf("нет данных x500 для coat=%s R%.0f δпр=%.1f", el.Coat, el.HtLevel, dpr)
+		er.Exclusion = fmt.Sprintf("нет данных x500 для coat=%s R%.0f δпр=%.2f", el.Coat, el.HtLevel, dpr)
 		return er, lines, trace
 	}
 	er.Delta = delta
@@ -377,9 +377,10 @@ func deltaPr(f, pi float64) float64 {
 	if pi <= 0 {
 		return 0
 	}
-	return round1(f / pi)
+	return round2(f / pi)
 }
 
 func round1(v float64) float64 { return math.Round(v*10) / 10 }
+func round2(v float64) float64 { return math.Round(v*100) / 100 }
 func round3(v float64) float64 { return math.Round(v*1000) / 1000 }
 func round0(v float64) float64 { return math.Round(v) }

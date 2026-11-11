@@ -685,7 +685,20 @@ func (s *Service) writeSheet(f *excelize.File, sh sheetData, resp models.CalcRes
 	index := 0
 	for _, r := range sh.Rows {
 		if r.Group != "" && r.Group != lastGroup {
-			_ = f.SetCellValue(sh.Name, cell("B", row), r.Group)
+			// Название группы — отдельной строкой, объединённой по всей ширине
+			// таблицы: иначе оно стояло бы в колонке названий элементов и
+			// читалось как ещё один элемент.
+			firstCol, lastCol := 1, len(cols)
+			_ = f.MergeCell(sh.Name, cell(colLetter(firstCol), row), cell(colLetter(lastCol), row))
+			style, errStyle := f.NewStyle(&excelize.Style{
+				Font:      &excelize.Font{Bold: true},
+				Fill:      excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{"F2F2F2"}},
+				Alignment: &excelize.Alignment{Vertical: "center"},
+			})
+			if errStyle == nil {
+				_ = f.SetCellStyle(sh.Name, cell(colLetter(firstCol), row), cell(colLetter(lastCol), row), style)
+			}
+			_ = f.SetCellValue(sh.Name, cell(colLetter(firstCol), row), r.Group)
 			lastGroup = r.Group
 			row++
 		}

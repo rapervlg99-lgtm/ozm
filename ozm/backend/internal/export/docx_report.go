@@ -259,7 +259,7 @@ func (d *docxReport) section2() {
 			{Text: el.family},
 			{Text: fmtNum(el.res.F, 0), Align: "right"},
 			{Text: fmtNum(el.res.Pi, 0), Align: "right"},
-			{Text: fmtNum(el.res.Dpr, 1), Align: "right"},
+			{Text: fmtNum(el.res.Dpr, 2), Align: "right"},
 		})
 	}
 	d.Table(widths, rows)
@@ -293,7 +293,7 @@ func (d *docxReport) section3() {
 			rows = append(rows, []docxCell{
 				{Text: strconv.Itoa(idx), Align: "center"},
 				{Text: el.title},
-				{Text: fmtNum(el.res.Dpr, 1), Align: "right"},
+				{Text: fmtNum(el.res.Dpr, 2), Align: "right"},
 				{Text: fmtNum(el.htLevel, 0), Align: "right"},
 				{Text: fmtNum(el.res.Delta, 0), Align: "right"},
 				{Text: fmtNum(d.data.factRFor(el.res.Delta, el.res.Dpr), 0), Align: "right"},
@@ -333,7 +333,7 @@ func (d *docxReport) section3() {
 			if len(rates) == 0 {
 				rows = append(rows, []docxCell{
 					{Text: strconv.Itoa(idx), Align: "center"}, {Text: el.title},
-					{Text: fmtNum(el.res.Dpr, 1), Align: "right"}, {Text: fmtNum(el.htLevel, 0), Align: "right"},
+					{Text: fmtNum(el.res.Dpr, 2), Align: "right"}, {Text: fmtNum(el.htLevel, 0), Align: "right"},
 					{Text: el.coatName}, {Text: "–", Align: "right"}, {Text: "–", Align: "right"},
 				})
 				continue
@@ -341,7 +341,7 @@ func (d *docxReport) section3() {
 			for i, m := range rates {
 				first := strconv.Itoa(idx)
 				title := el.title
-				dpr := fmtNum(el.res.Dpr, 1)
+				dpr := fmtNum(el.res.Dpr, 2)
 				limit := fmtNum(el.htLevel, 0)
 				if i > 0 {
 					first, title, dpr, limit = "", "", "", ""

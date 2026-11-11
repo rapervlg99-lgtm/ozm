@@ -322,7 +322,7 @@ func (b *pdfBuilder) section2() {
 		idx++
 		rows = append(rows, pdfRow{cells: []string{
 			strconv.Itoa(idx), el.title, el.coatName, el.family,
-			fmtNum(el.res.F, 0), fmtNum(el.res.Pi, 0), fmtNum(el.res.Dpr, 1),
+			fmtNum(el.res.F, 0), fmtNum(el.res.Pi, 0), fmtNum(el.res.Dpr, 2),
 		}})
 	}
 	b.table(cols, rows)
@@ -356,7 +356,7 @@ func (b *pdfBuilder) section3() {
 			}
 			idx++
 			rows = append(rows, pdfRow{cells: []string{
-				strconv.Itoa(idx), el.title, fmtNum(el.res.Dpr, 1), fmtNum(el.htLevel, 0),
+				strconv.Itoa(idx), el.title, fmtNum(el.res.Dpr, 2), fmtNum(el.htLevel, 0),
 				fmtNum(el.res.Delta, 0), fmtNum(b.factRFor(el.res.Delta, el.res.Dpr), 0),
 			}})
 		}
@@ -394,13 +394,13 @@ func (b *pdfBuilder) section3() {
 			idx++
 			rates := b.taikorMaterials(el)
 			if len(rates) == 0 {
-				rows = append(rows, pdfRow{cells: []string{strconv.Itoa(idx), el.title, fmtNum(el.res.Dpr, 1), fmtNum(el.htLevel, 0), el.coatName, "–", "–"}})
+				rows = append(rows, pdfRow{cells: []string{strconv.Itoa(idx), el.title, fmtNum(el.res.Dpr, 2), fmtNum(el.htLevel, 0), el.coatName, "–", "–"}})
 				continue
 			}
 			for i, m := range rates {
 				if i == 0 {
 					rows = append(rows, pdfRow{cells: []string{
-						strconv.Itoa(idx), el.title, fmtNum(el.res.Dpr, 1), fmtNum(el.htLevel, 0),
+						strconv.Itoa(idx), el.title, fmtNum(el.res.Dpr, 2), fmtNum(el.htLevel, 0),
 						m.title, fmtNum(m.tsp, 2), fmtNum(m.rate, 2),
 					}})
 				} else {
