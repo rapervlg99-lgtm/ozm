@@ -684,13 +684,34 @@ func decimalsFor(m models.MaterialLine) int {
 // chart — рисунок 1: предел огнестойкости от приведённой толщины металла.
 func (b *pdfBuilder) chart() {
 	pdf := b.pdf
-	const w, h = 95.0, 62.0
-	maxX, maxY := 50.0, 250.0
+	const w, h = 128.0, 100.0
+	maxY := 250.0
+	// Ось X подгоняем под данные: кривые упираются в максимум при δпр всего
+	// 10–20 мм, и на фиксированных 0…50 половина поля оставалась пустой.
+	// Берём максимальный δпр, при котором хоть одна кривая достигает потолка.
+	maxX := 10.0
+	for _, th := range []float64{30, 40, 50, 60, 70, 80, 90} {
+		for step := 0.0; step <= 60; step += 0.5 {
+			if b.factRFor(th, step) >= maxY {
+				if step > maxX {
+					maxX = step
+				}
+				break
+			}
+		}
+	}
+	maxX = math.Ceil(maxX*1.15/5) * 5
+	if maxX < 15 {
+		maxX = 15
+	}
+	if maxX > 50 {
+		maxX = 50
+	}
 	if pdf.GetY()+h+30 > 268 {
 		pdf.AddPage()
 	}
 	top := pdf.GetY() + 6
-	x0, y0 := 45.0, top+h
+	x0, y0 := 42.0, top+h
 	pdf.SetDrawColor(120, 120, 120)
 	pdf.SetLineWidth(0.2)
 	pdf.Rect(x0, y0-h, w, h, "D")
@@ -708,24 +729,26 @@ func (b *pdfBuilder) chart() {
 		pdf.SetXY(x0-11, y-1.5)
 		pdf.CellFormat(10, 3, fmtNum(maxY*float64(i)/5, 0), "", 0, "R", false, 0, "")
 	}
-	pdf.SetXY(x0+w/2-20, y0+5)
-	pdf.CellFormat(40, 3, "Приведенная толщина металла (δпр, мм)", "", 0, "C", false, 0, "")
+	pdf.SetXY(x0+w/2-30, y0+5)
+	pdf.CellFormat(60, 3, "Приведенная толщина металла (δпр, мм)", "", 0, "C", false, 0, "")
 	pdf.SetFont("tn", "", 6.5)
 	pdf.SetXY(x0+w+2, y0-h-6)
 	pdf.CellFormat(30, 3, "Предел огнестойкости (мин.)", "", 0, "L", false, 0, "")
 
-	// линии по толщинам плит: R = a·(δпр − base) + b
+	// линии по толщинам плит: R = a·(δпр − base) + b, каждая толщина — своим
+	// цветом, как в образце; подписи справа тем же цветом.
 	thicknesses := []float64{30, 40, 50, 60, 70, 80, 90}
-	pdf.SetLineWidth(0.3)
+	palette := [][3]int{
+		{63, 81, 181}, {0, 137, 123}, {67, 160, 71}, {251, 192, 45},
+		{245, 124, 0}, {229, 57, 53}, {142, 36, 170},
+	}
+	pdf.SetLineWidth(0.45)
 	for ti, th := range thicknesses {
-		gray := 40 + ti*25
-		if gray > 200 {
-			gray = 200
-		}
-		pdf.SetDrawColor(int(gray), int(gray), int(gray))
+		c := palette[ti%len(palette)]
+		pdf.SetDrawColor(c[0], c[1], c[2])
 		started := false
 		var px, py float64
-		for step := 0.0; step <= maxX; step += 1 {
+		for step := 0.0; step <= maxX; step += 0.25 {
 			r := b.factRFor(th, step)
 			if r <= 0 {
 				started = false
@@ -739,9 +762,14 @@ func (b *pdfBuilder) chart() {
 			px, py = x, y
 			started = true
 		}
-		pdf.SetXY(x0+w+2, y0-h+float64(ti)*4)
+		pdf.SetTextColor(c[0], c[1], c[2])
+		pdf.SetXY(x0+w+3, y0-h+float64(ti)*5)
 		pdf.CellFormat(20, 3, fmt.Sprintf("%.0f мм", th), "", 0, "L", false, 0, "")
 	}
+	// возвращаем обычные цвета: иначе последний цвет кривой уходил в рамки
+	// таблиц, которые рисуются следом
+	pdf.SetDrawColor(60, 60, 60)
+	pdf.SetLineWidth(0.2)
 	pdf.SetTextColor(33, 33, 33)
 	pdf.SetY(y0 + 8)
 }
