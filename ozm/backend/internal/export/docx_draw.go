@@ -200,11 +200,31 @@ func (d *docxReport) chartPNG() ([]byte, error) {
 	axis := color.RGBA{110, 110, 110, 255}
 	inkCol := color.RGBA{60, 60, 60, 255}
 
-	const maxX, maxY = 50.0, 250.0
+	// Ось X — по данным: максимальный δпр, при котором кривая упирается в
+	// потолок 250 мин, плюс 15 % запаса (как в PDF-отчёте).
+	maxX := 10.0
+	for _, th := range []float64{30, 40, 50, 60, 70, 80, 90} {
+		for step := 0.0; step <= 60; step += 0.5 {
+			if d.data.factRFor(th, step) >= 250 {
+				if step > maxX {
+					maxX = step
+				}
+				break
+			}
+		}
+	}
+	maxX = math.Ceil(maxX*1.15/5) * 5
+	if maxX < 15 {
+		maxX = 15
+	}
+	if maxX > 50 {
+		maxX = 50
+	}
+	const maxY = 250.0
 	for i := 0; i <= 5; i++ {
 		x := x0 + plotW*i/5
 		rasterLine(img, x, top, x, y0, grid)
-		label := []string{"0", "10", "20", "30", "40", "50"}[i]
+		label := fmtNum(maxX*float64(i)/5, 0)
 		drawText(img, x-textWidth(1, label)/2, y0+12, 1, label, inkCol)
 	}
 	for i := 0; i <= 5; i++ {
@@ -219,12 +239,12 @@ func (d *docxReport) chartPNG() ([]byte, error) {
 	rasterLine(img, x0+plotW, top, x0+plotW, y0, axis)
 
 	thicknesses := []float64{30, 40, 50, 60, 70, 80, 90}
+	palette := []color.RGBA{
+		{63, 81, 181, 255}, {0, 137, 123, 255}, {67, 160, 71, 255}, {251, 192, 45, 255},
+		{245, 124, 0, 255}, {229, 57, 53, 255}, {142, 36, 170, 255},
+	}
 	for ti, th := range thicknesses {
-		g := 40 + ti*25
-		if g > 200 {
-			g = 200
-		}
-		col := color.RGBA{uint8(g), uint8(g), uint8(g), 255}
+		col := palette[ti%len(palette)]
 		px, py, started := 0, 0, false
 		for step := 0.0; step <= maxX; step += 0.25 {
 			r := d.data.factRFor(th, step)
@@ -236,11 +256,12 @@ func (d *docxReport) chartPNG() ([]byte, error) {
 			y := y0 - int(float64(plotH)*math.Min(r, maxY)/maxY)
 			if started {
 				rasterLine(img, px, py, x, y, col)
+				rasterLine(img, px, py+1, x, y+1, col)
 			}
 			px, py, started = x, y, true
 		}
-		// подпись толщины справа от графика
-		drawText(img, x0+plotW+8, y0-plotH+ti*28, 1, []string{"30", "40", "50", "60", "70", "80", "90"}[ti], inkCol)
+		// подпись толщины справа от графика — цветом её линии
+		drawText(img, x0+plotW+8, y0-plotH+ti*28, 1, fmtNum(th, 0), palette[ti%len(palette)])
 	}
 	// ось X подписана растром, ось Y — в подписи рисунка
 	drawText(img, x0+plotW/2-textWidth(1, "x 10-50")/2, y0+26, 1, "", inkCol)
