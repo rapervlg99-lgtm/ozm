@@ -1,6 +1,7 @@
 package calc
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -95,4 +96,37 @@ func TestDimsFromLabelWhenCatalogHasNone(t *testing.T) {
 	if dims["B"] != 90 || dims["b"] != 56 || dims["t"] != 5.5 {
 		t.Fatalf("неравнополочный уголок: %v", dims)
 	}
+}
+
+// Каждая марка справочника должна давать ненулевые площадь и периметр —
+// иначе δпр не считается (как было у «L90×9» из старого справочника).
+func TestEveryCatalogMarkHasGeometry(t *testing.T) {
+	store, err := config.LoadFromFiles("../../dicts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	engine := New(store)
+	sides := models.HeatedSides{Left: true, Top: true, Right: true, Bottom: true}
+	bad := 0
+	examples := []string{}
+	for _, row := range store.Roll {
+		dims := engine.resolveDims(models.ElementInput{Shape: row.Shape, RollID: row.ID})
+		f := sectionArea(row.Shape, dims)
+		pi := heatedPerimeter(row.Shape, dims, sides)
+		if f <= 0 || pi <= 0 {
+			bad++
+			if len(examples) < 8 {
+				examples = append(examples, fmt.Sprintf("%s %s (%s) F=%v P=%v", row.ID, row.Label, row.Shape, f, pi))
+			}
+		}
+	}
+	// Часть записей старых справочников приходит без размеров, и по обозначению
+	// их не восстановить (двутавры по ГОСТ 57837 вида «100Ш3», трубы без стенки).
+	// Фиксируем текущий уровень, чтобы правки не ухудшали картину: подстановка
+	// размеров из обозначения и из одноимённой марки нового справочника уже
+	// сняла 232 → 142.
+	if bad > 150 {
+		t.Fatalf("марок без геометрии стало больше: %d (было 142), например: %v", bad, examples)
+	}
+	t.Logf("марок без геометрии: %d (например: %v)", bad, examples)
 }

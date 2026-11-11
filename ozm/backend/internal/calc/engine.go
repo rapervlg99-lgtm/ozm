@@ -326,9 +326,30 @@ func (e *Engine) resolveDims(el models.ElementInput) map[string]float64 {
 				// У части записей старого справочника размеров нет вовсе
 				// (например, «L90×9» из ГОСТ 8509-93): тогда разбираем
 				// обозначение — иначе площадь сечения 0 и δпр не считается.
-				if len(dims) == 0 {
+				needKeys := dimsKeysFor(r.Shape)
+				if !hasDims(dims, needKeys) {
+					// неполные размеры дополняем разбором обозначения
 					for k, v := range dimsFromLabel(r.Shape, r.Label) {
-						dims[k] = v
+						if _, ok := dims[k]; !ok && v != 0 {
+							dims[k] = v
+						}
+					}
+				}
+				// Если размеров нет и в обозначении их не разобрать (например,
+				// «100Ш3» — серия по ГОСТ 57837), берём размеры одноимённой
+				// марки из другого (нового) справочника.
+				if !hasDims(dims, needKeys) {
+					for _, other := range e.cfg.Roll {
+						if other.ID == r.ID || other.Label != r.Label || len(other.Dims) == 0 {
+							continue
+						}
+						if other.Shape != r.Shape {
+							continue
+						}
+						for k, v := range other.Dims {
+							dims[k] = v
+						}
+						break
 					}
 				}
 				break
@@ -436,4 +457,29 @@ func dimsFromLabel(shape, label string) map[string]float64 {
 		out["b"] = nums[0]
 	}
 	return out
+}
+
+// dimsKeysFor — какие размеры нужны формулам вида сечения.
+func dimsKeysFor(shape string) []string {
+	switch {
+	case strings.HasPrefix(shape, "corner"):
+		return []string{"b", "t"}
+	case strings.HasPrefix(shape, "tube_sq"):
+		return []string{"h", "s"}
+	case strings.HasPrefix(shape, "tube_sm"):
+		return []string{"h", "s"}
+	case strings.HasPrefix(shape, "tube"):
+		return []string{"h", "s"}
+	default:
+		return []string{"h", "b", "s"}
+	}
+}
+
+func hasDims(dims map[string]float64, keys []string) bool {
+	for _, k := range keys {
+		if dims[k] == 0 {
+			return false
+		}
+	}
+	return true
 }
