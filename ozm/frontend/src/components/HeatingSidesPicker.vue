@@ -123,13 +123,15 @@ watch(
   () => props.modelValue,
   (val) => {
     const parsed = parse(val ?? "");
-    for (const s of ORDER) sides[s] = parsed[s];
+    for (const s of ORDER) sides[s] = props.only.includes(s) ? parsed[s] : false;
   },
   { immediate: true }
 );
 
 function buildValue(): string {
-  return ORDER.filter((s) => sides[s])
+  // Только доступные стороны: у листа это «снизу»/«сверху», поэтому в строку
+  // не попадают невидимые «слева»/«справа» (иначе подпись была «сверху, слева»).
+  return ORDER.filter((s) => props.only.includes(s) && sides[s])
     .map((s) => LABELS[s])
     .join(", ");
 }
