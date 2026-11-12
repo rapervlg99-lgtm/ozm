@@ -4,7 +4,7 @@ services:
   # поставке для этого отдельный distroless-образ (backend/Dockerfile).
   ozm-migrate:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile.local
     image: ozm-backend:local
     entrypoint: ["/app/ozm-migrate"]
@@ -21,7 +21,7 @@ services:
       # PG_MIGRATE_* не задаём — миграции идут под PGUSER.
       DICTS_BASELINE_DIR: /config/dicts
     volumes:
-      - ./backend/dicts:/config/dicts:ro
+      - ../backend/dicts:/config/dicts:ro
     depends_on:
       ozm-postgres:
         condition: service_healthy
@@ -63,7 +63,7 @@ services:
 
   ozm-web:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     ports:
       - "127.0.0.1:5173:8080"
@@ -78,7 +78,7 @@ services:
   # dev-сервера (proxy /ocr -> localhost:8000) и ручных проверок API.
   ozm-ocr:
     build:
-      context: ./ocr
+      context: ../ocr
       dockerfile: Dockerfile
     image: ozm-ocr:local
     ports:

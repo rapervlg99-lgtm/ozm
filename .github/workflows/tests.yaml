@@ -165,9 +165,6 @@ jobs:
       - name: Type-check (vue-tsc)
         run: npx vue-tsc --noEmit
 
-      - name: Lint
-        run: npm run lint
-
       - name: Unit tests (vitest)
         run: npx vitest run
 

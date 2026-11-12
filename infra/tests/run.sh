@@ -69,6 +69,7 @@ ENV_SECRET_DIRS=(
 # допишите его сюда, чтобы список совпадал с security.yaml.
 DOCKERFILES=(
   "${REPO_ROOT}/backend/Dockerfile"
+  "${REPO_ROOT}/backend/Dockerfile.local"
   "${REPO_ROOT}/frontend/Dockerfile"
   "${REPO_ROOT}/ocr/Dockerfile"
 )

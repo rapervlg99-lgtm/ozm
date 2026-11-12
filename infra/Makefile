@@ -74,7 +74,7 @@ DOCKER_PROXY_HOST_1  ?= REPLACE_WITH_DOCKER_PROXY_HOST
 RUNTIME_IMAGE        ?= gcr.io/distroless/static-debian12:nonroot
 else ifeq ($(REGISTRY_PROFILE),local)
 DOCKER_REGISTRY      ?= localhost
-DOCKER_PROXY_HOST_1  ?= docker.io
+DOCKER_PROXY_HOST_1  ?=
 RUNTIME_IMAGE        ?= alpine:3.22.1
 else
 $(error REGISTRY_PROFILE=$(REGISTRY_PROFILE): допустимы local и corp)
@@ -131,8 +131,8 @@ ENV_FILE_ARGS := $(foreach f,$(ENV_FILES),--env-file $(f))
 COMPOSE_ARGS  := -p $(COMPOSE_PROJECT_NAME) -f docker-compose.yaml
 # RUNTIME_IMAGE нужен только образу api: у web оба базовых образа с docker.io,
 # а неиспользованный build-arg BuildKit печатает предупреждением.
-BUILD_ARGS_API := --build-arg DOCKER_PROXY_HOST_1=$(DOCKER_PROXY_HOST_1) --build-arg RUNTIME_IMAGE=$(RUNTIME_IMAGE)
-BUILD_ARGS_WEB := --build-arg DOCKER_PROXY_HOST_1=$(DOCKER_PROXY_HOST_1)
+BUILD_ARGS_API := --build-arg DOCKER_PROXY_HOST_1=$(if $(DOCKER_PROXY_HOST_1),$(patsubst %/,%,$(DOCKER_PROXY_HOST_1))/) --build-arg RUNTIME_IMAGE=$(RUNTIME_IMAGE)
+BUILD_ARGS_WEB := --build-arg DOCKER_PROXY_HOST_1=$(if $(DOCKER_PROXY_HOST_1),$(patsubst %/,%,$(DOCKER_PROXY_HOST_1))/)
 
 .PHONY: gen otel-sync up down reset-data build compliance lint test help
 
@@ -238,13 +238,13 @@ endif
 	  exit 1; }
 	@docker compose $(COMPOSE_ARGS) down -v
 
-## build: собрать образы api и web набором REGISTRY_PROFILE (local по умолчанию, corp — через прокси); контекст web — КОРЕНЬ рабочего каталога
+## build: собрать образы api и web набором REGISTRY_PROFILE (local по умолчанию, corp — через прокси); контекст web — ../frontend
 build:
-	@echo "[build] набор образов $(REGISTRY_PROFILE): DOCKER_PROXY_HOST_1=$(DOCKER_PROXY_HOST_1) RUNTIME_IMAGE=$(RUNTIME_IMAGE)"
+	@echo "[build] набор образов $(REGISTRY_PROFILE): DOCKER_PROXY_HOST_1=$(if $(DOCKER_PROXY_HOST_1),$(patsubst %/,%,$(DOCKER_PROXY_HOST_1))/) RUNTIME_IMAGE=$(RUNTIME_IMAGE)"
 	@echo "[build] $(SERVICE)-api $(IMAGE_TAG)"
 	@docker build $(BUILD_ARGS_API) -t $(DOCKER_REGISTRY)/$(SERVICE)-api:$(IMAGE_TAG) -f ../backend/Dockerfile ../backend
 	@echo "[build] $(SERVICE)-web $(IMAGE_TAG)"
-	@docker build $(BUILD_ARGS_WEB) $(NPM_SECRET_ARG) -t $(DOCKER_REGISTRY)/$(SERVICE)-web:$(IMAGE_TAG) -f ../frontend/Dockerfile ..
+	@docker build $(BUILD_ARGS_WEB) $(NPM_SECRET_ARG) -t $(DOCKER_REGISTRY)/$(SERVICE)-web:$(IMAGE_TAG) -f ../frontend/Dockerfile ../frontend
 	@docker images --filter "reference=$(DOCKER_REGISTRY)/$(SERVICE)-*"
 
 ## compliance: 15 статических проверок корп. шаблона

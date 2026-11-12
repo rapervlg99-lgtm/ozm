@@ -13,7 +13,7 @@ import io
 import os
 import re
 
-BASE = r'D:\dev\calc\ozm'
+BASE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # только маршруты: строка начинается со слэша. Иначе в контракт попадают
 # обращения к заголовкам (Header.Get("Authorization"), .Get("X-Request-Id")).
 ROUTES_RE = re.compile(r'\.(Get|Post|Put|Patch|Delete)\("(/[^"]*)"')

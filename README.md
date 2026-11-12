@@ -7,7 +7,7 @@
 | `backend/` | Go API (`ozm/backend`): calc + `/api/v1/ext` (OCR) |
 | `ocr/` | Python-сервис `ocrpdf`: распознавание таблиц ИД из PDF (страница и API под `/ocr/`) |
 | `frontend/` | Vue 3 SPA |
-| `dev/` | compose local/test/prod-like, smoke, junctions → backend/frontend |
+| `dev/` | compose local/test/prod-like, smoke |
 | `infra/` | нормативная поставка: compose стенда, контуры, приёмка `tests/run.sh`, cloud-init |
 | `docs/` | продуктовые/API спеки |
 

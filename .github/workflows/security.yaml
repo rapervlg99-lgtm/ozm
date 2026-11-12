@@ -229,6 +229,15 @@ jobs:
           format: sarif
           output-file: hadolint-api.sarif
 
+      - name: hadolint backend/Dockerfile.local
+        uses: hadolint/hadolint-action@v3.1.0
+        if: always()
+        with:
+          dockerfile: backend/Dockerfile.local
+          config: .hadolint.yaml
+          format: sarif
+          output-file: hadolint-api-local.sarif
+
       - name: hadolint frontend/Dockerfile
         uses: hadolint/hadolint-action@v3.1.0  # pin: v3.1.0 → зафиксировать SHA при первом прогоне: git ls-remote
         if: always()

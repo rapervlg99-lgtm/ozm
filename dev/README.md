@@ -17,13 +17,8 @@ docker compose -f docker-compose.local.yml up --build
 
 API: http://127.0.0.1:8080/healthz
 
-Compose contexts `./backend` и `./frontend` — Windows junctions на соседние папки
-(создаются локально, в git не коммитятся). Если их нет:
-
-```powershell
-cmd /c mklink /J backend ..\backend
-cmd /c mklink /J frontend ..\frontend
-```
+Compose использует соседние каталоги `../backend`, `../frontend` и `../ocr`.
+Дополнительные junctions и символические ссылки не нужны.
 
 ## Smoke
 
